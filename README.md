@@ -1,0 +1,151 @@
+# 🚀 MLOps Qafza 2026
+
+**Will an order be delivered late, or on time?**
+
+That's the question driving everything in this repo — my hands-on build-through of Qafza Tech's 12-Week MLOps Engineering Training Program, using the Olist Brazilian E-Commerce Dataset as the running case study. Starts as a raw CSV dump, ends as a production-grade, end-to-end ML system.
+
+---
+
+## 🎯 The Problem
+
+**Late-delivery classification:** predict whether a _delivered_ order will arrive **after** its estimated delivery date — using only information available _before_ delivery happens.
+
+That last part matters. `order_delivered_customer_date` and review data only exist once the order is already done — using them as model inputs would be leakage, not prediction. The real signal has to come from what's known at purchase/shipping time: product category & weight, freight value, payment type, customer/seller location, and so on.
+
+## 🗂️ The Dataset
+
+[Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — not one clean table, but 9 linked CSVs (orders, customers, items, payments, reviews, products, sellers, geolocation) that have to be joined and aggregated correctly first.
+
+```
+                     order_id
+olist_order_reviews ────────► olist_orders ◄──────── olist_order_payments
+                                   │   ▲
+                        customer_id│   │order_id
+                                   ▼   │
+                          olist_customers   olist_order_items ──seller_id──► olist_sellers
+                                                    │                              │
+                                              product_id                    zip_code_prefix
+                                                    ▼                              ▼
+                                            olist_products              olist_geolocation
+```
+
+`order_items` and `payments` are multiple rows per order — anything built at order-level needs a `GROUP BY` before joining, or row counts silently multiply.
+
+---
+
+## 📁 Repo Structure
+
+```
+mlops-qafza-2026/
+├── README.md
+├── .gitignore
+├── requirements.txt
+├── docker-compose.yml
+├── .env.example
+├── data/                          # gitignored — raw & processed data live here locally
+│   ├── raw/
+│   └── processed/
+└── tasks/
+    └── task-01-data-into-database/
+        ├── README.md
+        ├── notebook.ipynb
+        └── sql/
+            └── schema.sql
+```
+
+Each week gets its own folder under `tasks/`, so the repo stays organized as the program progresses.
+
+## 🛠️ Tech Stack
+
+| Phase               | Tools                                        |
+| ------------------- | -------------------------------------------- |
+| Foundations         | Python, Pandas, NumPy, Scikit-learn, Jupyter |
+| Database            | PostgreSQL, SQLAlchemy                       |
+| Containerization    | Docker, Docker Compose                       |
+| Data Versioning     | DVC                                          |
+| Experiment Tracking | MLflow                                       |
+| Serving             | FastAPI                                      |
+| Orchestration       | Airflow / Prefect                            |
+| CI/CD               | GitHub Actions                               |
+| Monitoring          | Evidently AI, Prometheus, Grafana            |
+| Infrastructure      | Terraform                                    |
+
+---
+
+## ⚡ Getting Started
+
+**Prerequisites:** Python 3.10+, Docker & Docker Compose, a [Kaggle](https://www.kaggle.com/) account + API token.
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/JHT127/mlops-qafza-2026.git
+cd mlops-qafza-2026
+
+# 2. Create a virtual environment
+python -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Copy the env template and fill in your own values
+cp .env.example .env
+
+# 5. Spin up the database
+docker compose up -d
+
+# 6. Open the Task 1 notebook
+jupyter notebook tasks/task-01-data-into-database/notebook.ipynb
+```
+
+Task-specific instructions live inside each task's own `README.md`.
+
+---
+
+<details>
+<summary><strong>📅 Full 12-week program roadmap</strong> (click to expand)</summary>
+
+| Week  | Phase                  | Topic                               |
+| ----- | ---------------------- | ----------------------------------- |
+| 1     | Local Foundations      | Leakage-proof ML Pipeline           |
+| 2     | Local Foundations      | Deep Learning Pipeline              |
+| 3     | Production APIs        | FastAPI / Flask serving             |
+| 4     | Containerization       | Docker                              |
+| 5     | Data Pipelines         | ETL (Airflow / Prefect)             |
+| 6     | Data Versioning        | DVC                                 |
+| 7     | Experiment Tracking    | MLflow                              |
+| 8     | Distributed Training   | Ray / Horovod / PyTorch Distributed |
+| 9     | Feature Store          | Feast / Hopsworks                   |
+| 10    | Monitoring             | Prometheus / Grafana / Evidently AI |
+| 11    | Continuous Retraining  | Automated retraining pipelines      |
+| 12    | Infrastructure as Code | Terraform / Pulumi                  |
+| Final | Capstone               | End-to-End ML System                |
+
+</details>
+
+**My progress:**
+
+- [x] Task 1 — Get the Data Into a Database
+- [ ] Task 2 — Deep Learning Pipeline
+- [ ] Task 3 — Production API
+- [ ] Task 4 — Docker
+- [ ] Task 5 — ETL Pipeline
+- [ ] Task 6 — Data Versioning (DVC)
+- [ ] Task 7 — MLflow
+- [ ] Task 8 — Distributed Training
+- [ ] Task 9 — Feature Store
+- [ ] Task 10 — Monitoring
+- [ ] Task 11 — Continuous Retraining
+- [ ] Task 12 — Infrastructure as Code
+- [ ] Capstone — End-to-End ML System
+
+---
+
+## 👤 Author
+
+**Joud Thaher**
+MLOps Engineering Training Participant — Qafza Tech, 2026
+
+## 📄 License
+
+This repository contains my personal coursework for the Qafza Tech MLOps Engineering Training Program. Shared for learning purposes — please don't copy it directly for your own submission.

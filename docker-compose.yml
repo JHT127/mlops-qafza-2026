@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: olist_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-olist_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-olist_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-olist_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # Optional: lightweight web UI to browse the database in your browser
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: olist_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
