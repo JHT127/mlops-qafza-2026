@@ -144,6 +144,7 @@ Task-specific instructions live inside each task's own `README.md`.
 ## 👤 Author
 
 **Joud Thaher**
+
 MLOps Engineering Training Participant — Qafza Tech, 2026
 
 ## 📄 License
