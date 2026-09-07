@@ -41,6 +41,16 @@ mlartifacts/
 .dvc/cache
 .dvc/tmp
 
+# ── Task 2 notebook artifacts (regenerate locally by re-running the notebooks) ──
+tasks/task-02-tables-to-notebooks/artifacts/tables/*
+tasks/task-02-tables-to-notebooks/artifacts/figures/*
+tasks/task-02-tables-to-notebooks/artifacts/models/*
+tasks/task-02-tables-to-notebooks/artifacts/reports/*
+!tasks/task-02-tables-to-notebooks/artifacts/tables/.gitkeep
+!tasks/task-02-tables-to-notebooks/artifacts/figures/.gitkeep
+!tasks/task-02-tables-to-notebooks/artifacts/models/.gitkeep
+!tasks/task-02-tables-to-notebooks/artifacts/reports/.gitkeep
+
 # ── OS / editor ───────────────────────────────────────
 .DS_Store
 Thumbs.db

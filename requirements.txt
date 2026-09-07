@@ -5,3 +5,9 @@ psycopg2-binary
 python-dotenv
 kagglehub
 jupyter
+
+# ── Added for Task 2 (notebooks, feature engineering, modeling) ──────
+scikit-learn
+matplotlib
+seaborn
+joblib

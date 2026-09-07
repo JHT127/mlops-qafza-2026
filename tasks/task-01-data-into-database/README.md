@@ -4,9 +4,9 @@
 
 ## What's in this folder
 
-| File | Purpose |
-|---|---|
-| `notebook.ipynb` | Full walkthrough: download → inspect → connect → load → query |
+| File             | Purpose                                                                        |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `notebook.ipynb` | Full walkthrough: download → inspect → connect → load → query                  |
 | `sql/schema.sql` | Reference SQL if you'd rather create tables by hand instead of `pandas.to_sql` |
 
 ## How to run it
@@ -31,5 +31,6 @@
 ## Notes to self
 
 - No EDA yet — that's a later task. This one is purely "get it in, prove it works."
+- The active CSV copy is stored in the repository's `data/raw/` folder. The notebook copies the Kaggle download there before loading it, so clearing Downloads or the Kaggle cache will not break the project.
 - Aggregation matters: `order_items` and `payments` are **multiple rows per order**, so anything built later at order-level needs a `GROUP BY` first, or joins will silently duplicate rows.
-- Leakage watch: `order_delivered_customer_date` and review data are only available *after* the fact — fine for analysis, not fine as model inputs later on.
+- Leakage watch: `order_delivered_customer_date` and review data are only available _after_ the fact — fine for analysis, not fine as model inputs later on.
