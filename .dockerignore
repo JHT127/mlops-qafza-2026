@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+venv
+data
+notebooks
+**/*.ipynb
+tasks/task-01-data-into-database
+tasks/task-02-tables-to-notebooks/*.ipynb
+tasks/task-02-tables-to-notebooks/artifacts
+logs
+*.csv
+*.joblib
+*.png
+__pycache__
+*.pyc

@@ -25,5 +25,102 @@ services:
     depends_on:
       - postgres
 
+  artifact-store:
+    image: quay.io/minio/minio:latest
+    container_name: task3_artifact_store
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - task3-artifacts:/data
+
+  artifact-store-init:
+    image: quay.io/minio/mc:latest
+    container_name: task3_artifact_store_init
+    restart: "no"
+    depends_on:
+      - artifact-store
+    entrypoint: >-
+      /bin/sh -c "mc alias set local http://artifact-store:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD
+      && mc mb --ignore-existing local/mlflow
+      && mc mb --ignore-existing local/dvc"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: task3_mlflow
+    restart: unless-stopped
+    command: >-
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql+psycopg2://${POSTGRES_USER:-olist_user}:${POSTGRES_PASSWORD:-olist_pass}@postgres:5432/${POSTGRES_DB:-olist_db}
+      --artifacts-destination s3://mlflow
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-olist_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-olist_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-olist_db}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+      MLFLOW_S3_ENDPOINT_URL: http://artifact-store:9000
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    depends_on:
+      - postgres
+      - artifact-store-init
+
+  task3-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task3_api
+    restart: unless-stopped
+    environment:
+      APP_ENV: container
+      MODEL_DIR: /artifacts/models
+      MODEL_SOURCE: ${MODEL_SOURCE:-artifact_store}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-olist-late-delivery}
+      MLFLOW_MODEL_STAGE: ${MLFLOW_MODEL_STAGE:-Production}
+      LOG_DIR: /var/log/task3
+      MODEL_VERSION: ${MODEL_VERSION:-task-2-random-forest}
+      PREDICTION_THRESHOLD: ${PREDICTION_THRESHOLD:-0.5}
+      MAX_BATCH_SIZE: ${MAX_BATCH_SIZE:-1000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+      MLFLOW_S3_ENDPOINT_URL: http://artifact-store:9000
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./tasks/task-02-tables-to-notebooks/artifacts/models:/artifacts/models:ro
+      - ./tasks/task-02-tables-to-notebooks/artifacts/reports:/artifacts/reports:ro
+      - task3-logs:/var/log/task3
+    depends_on:
+      - postgres
+      - artifact-store
+      - mlflow
+
 volumes:
   postgres-data:
+  task3-artifacts:
+  task3-logs:

@@ -1,0 +1,8 @@
+stages:
+  validate_task3_contract:
+    cmd: python scripts/validate_task3_contract.py
+    deps:
+      - config/expectations/orders.json
+      - scripts/validate_task3_contract.py
+      - src/task3/features.py
+      - src/task3/validation.py

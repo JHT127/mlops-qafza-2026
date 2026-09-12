@@ -1,0 +1,5 @@
+# Optional tooling for data versioning, expectations, and experiment tracking.
+dvc==3.63.0
+pathspec==0.12.1
+great-expectations==1.23.0
+mlflow==3.4.0

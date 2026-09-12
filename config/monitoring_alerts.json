@@ -1,0 +1,25 @@
+{
+  "alerts": [
+    {
+      "name": "high_api_error_rate",
+      "condition": "5-minute error rate > 5%",
+      "response": "investigate input validation, artifact availability, and service logs"
+    },
+    {
+      "name": "high_api_latency",
+      "condition": "95th percentile request latency > 1 second",
+      "response": "check batch size, CPU saturation, and model load behavior"
+    },
+    {
+      "name": "prediction_distribution_shift",
+      "condition": "late-probability histogram shifts materially from the validation baseline",
+      "response": "run a drift investigation before changing the production threshold"
+    }
+  ],
+  "metrics": [
+    "task3_requests_total",
+    "task3_request_latency_seconds",
+    "task3_predictions_total",
+    "task3_prediction_probability"
+  ]
+}
