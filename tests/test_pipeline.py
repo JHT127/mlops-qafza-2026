@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from task3.pipeline import InferencePipeline, PredictionError
+from task3.pipeline import PredictionError
 from task3.validation import validate_orders
 
 

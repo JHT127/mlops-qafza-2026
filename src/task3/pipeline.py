@@ -71,7 +71,8 @@ class InferencePipeline:
             for probability in probabilities[:, late_index]
         ]
         logger.info(
-            "prediction request_count=%d output_count=%d probability_mean=%.6f latency_ms=%.3f model_version=%s",
+            "prediction request_count=%d output_count=%d probability_mean=%.6f "
+            "latency_ms=%.3f model_version=%s",
             len(records),
             len(predictions),
             sum(item.probability_late for item in predictions) / len(predictions),

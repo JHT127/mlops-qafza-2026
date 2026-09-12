@@ -7,5 +7,7 @@ from task3.pipeline import InferencePipeline
 
 @pytest.fixture
 def loaded_pipeline():
-    artifacts = load_artifacts(settings.model_dir, settings.feature_list_path, settings.model_version)
+    artifacts = load_artifacts(
+        settings.model_dir, settings.feature_list_path, settings.model_version
+    )
     return InferencePipeline(artifacts)
