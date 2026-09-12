@@ -39,6 +39,41 @@ services:
     volumes:
       - task3-artifacts:/data
 
+  artifact-store-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    container_name: task3_artifact_store_init
+    restart: "no"
+    depends_on:
+      - artifact-store
+    entrypoint: >-
+      /bin/sh -c "mc alias set local http://artifact-store:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD
+      && mc mb --ignore-existing local/mlflow
+      && mc mb --ignore-existing local/dvc"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.4.0
+    container_name: task3_mlflow
+    restart: unless-stopped
+    command: >-
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql+psycopg2://$$POSTGRES_USER:$$POSTGRES_PASSWORD@postgres:5432/$$POSTGRES_DB
+      --artifacts-destination s3://mlflow
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-olist_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-olist_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-olist_db}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+      MLFLOW_S3_ENDPOINT_URL: http://artifact-store:9000
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    depends_on:
+      - postgres
+      - artifact-store-init
+
   task3-api:
     build:
       context: .
@@ -48,11 +83,18 @@ services:
     environment:
       APP_ENV: container
       MODEL_DIR: /artifacts/models
+      MODEL_SOURCE: ${MODEL_SOURCE:-artifact_store}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-olist-late-delivery}
+      MLFLOW_MODEL_STAGE: ${MLFLOW_MODEL_STAGE:-Production}
       LOG_DIR: /var/log/task3
       MODEL_VERSION: ${MODEL_VERSION:-task-2-random-forest}
       PREDICTION_THRESHOLD: ${PREDICTION_THRESHOLD:-0.5}
       MAX_BATCH_SIZE: ${MAX_BATCH_SIZE:-1000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+      MLFLOW_S3_ENDPOINT_URL: http://artifact-store:9000
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
@@ -62,6 +104,7 @@ services:
     depends_on:
       - postgres
       - artifact-store
+      - mlflow
 
 volumes:
   postgres-data:

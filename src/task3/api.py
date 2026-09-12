@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
-from .artifacts import ArtifactError, load_artifacts
+from .artifacts import ArtifactError, load_artifacts, load_registry_artifacts
 from .config import settings
 from .logging_config import configure_logging
 from .pipeline import InferencePipeline, PredictionError
@@ -44,9 +44,19 @@ app = FastAPI(
 @lru_cache(maxsize=1)
 def get_pipeline() -> InferencePipeline:
     try:
-        artifacts = load_artifacts(
-            settings.model_dir, settings.feature_list_path, settings.model_version
-        )
+        if settings.model_source == "mlflow":
+            model_uri = f"models:/{settings.mlflow_model_name}/{settings.mlflow_model_stage}"
+            artifacts = load_registry_artifacts(
+                settings.model_dir,
+                settings.feature_list_path,
+                settings.model_version,
+                model_uri,
+                settings.mlflow_tracking_uri,
+            )
+        else:
+            artifacts = load_artifacts(
+                settings.model_dir, settings.feature_list_path, settings.model_version
+            )
     except (ArtifactError, OSError) as exc:
         raise RuntimeError(str(exc)) from exc
     return InferencePipeline(artifacts, settings.prediction_threshold)

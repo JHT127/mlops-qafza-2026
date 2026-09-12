@@ -1,0 +1,21 @@
+schema: '2.0'
+stages:
+  validate_task3_contract:
+    cmd: python scripts/validate_task3_contract.py
+    deps:
+    - path: config/expectations/orders.json
+      hash: md5
+      md5: 079c9e27b23e0cfe04813330481b7dc4
+      size: 525
+    - path: scripts/validate_task3_contract.py
+      hash: md5
+      md5: 0789ae974fa887c36e1412ea0c132730
+      size: 683
+    - path: src/task3/features.py
+      hash: md5
+      md5: 4ba51a2b57ac25e97d932851129d7c12
+      size: 1250
+    - path: src/task3/validation.py
+      hash: md5
+      md5: 28a5e75dd42011790535849c18516145
+      size: 5501

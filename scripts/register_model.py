@@ -28,6 +28,14 @@ def main() -> None:
     with mlflow.start_run(run_name=metadata["version"]):
         mlflow.log_param("model_version", metadata["version"])
         mlflow.log_metric("average_precision", metadata["training_metric_value"])
+        mlflow.log_artifact(args.model_dir / "preprocessor.joblib", artifact_path="metadata")
+        mlflow.log_artifact(
+            args.model_dir / "main_product_category_top_values.json", artifact_path="metadata"
+        )
+        mlflow.log_artifact(
+            Path("tasks/task-02-tables-to-notebooks/artifacts/reports/feature_list.json"),
+            artifact_path="metadata",
+        )
         mlflow.sklearn.log_model(model, "model", registered_model_name=args.registry_name)
     print(f"Registered {args.registry_name} version {metadata['version']}")
 
