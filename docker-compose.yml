@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
     command: >-
       mlflow server --host 0.0.0.0 --port 5000
-      --backend-store-uri postgresql+psycopg2://$$POSTGRES_USER:$$POSTGRES_PASSWORD@postgres:5432/$$POSTGRES_DB
+      --backend-store-uri postgresql+psycopg2://${POSTGRES_USER:-olist_user}:${POSTGRES_PASSWORD:-olist_pass}@postgres:5432/${POSTGRES_DB:-olist_db}
       --artifacts-destination s3://mlflow
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-olist_user}
