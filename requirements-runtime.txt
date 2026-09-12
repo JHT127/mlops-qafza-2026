@@ -1,5 +1,6 @@
 # Runtime-only dependencies for the Task 3 inference service.
 fastapi==0.116.1
+great-expectations==1.23.0
 prometheus-client==0.22.1
 joblib==1.6.0
 numpy==2.5.3

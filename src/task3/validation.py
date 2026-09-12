@@ -4,15 +4,63 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+import great_expectations as gx
 import pandas as pd
+from great_expectations.core.expectation_suite import ExpectationSuite
 
 from .features import RAW_FEATURES
+
+NON_NEGATIVE_FEATURES = [
+    "n_items",
+    "n_distinct_products",
+    "n_distinct_sellers",
+    "total_price",
+    "total_freight_value",
+    "avg_freight_value",
+    "total_weight_g",
+    "max_product_length_cm",
+    "max_product_height_cm",
+    "max_product_width_cm",
+    "total_payment_value",
+    "n_payment_transactions",
+    "max_payment_installments",
+]
 
 
 @dataclass(frozen=True)
 class ValidationResult:
     valid: bool
     errors: tuple[str, ...] = ()
+
+
+def _great_expectations_result(records: list[dict[str, Any]]) -> tuple[str, ...]:
+    context = gx.get_context(mode="ephemeral")
+    data_source = context.data_sources.add_pandas(name="task3_requests")
+    asset = data_source.add_dataframe_asset(name="orders")
+    batch_definition = asset.add_batch_definition_whole_dataframe("request_batch")
+    frame = pd.DataFrame(records)
+    for column in RAW_FEATURES:
+        if column not in frame:
+            frame[column] = pd.NA
+    suite = ExpectationSuite(name="task3_orders")
+    for column in ("order_purchase_timestamp", "order_estimated_delivery_date"):
+        suite.add_expectation(
+            gx.expectations.ExpectColumnValuesToBeDateutilParseable(
+                column=column, mostly=1.0
+            )
+        )
+    for column in NON_NEGATIVE_FEATURES:
+        suite.add_expectation(
+            gx.expectations.ExpectColumnValuesToBeBetween(
+                column=column, min_value=0, mostly=1.0
+            )
+        )
+    result = batch_definition.get_batch({"dataframe": frame}).validate(suite)
+    return tuple(
+        f"Great Expectations failed: {item.expectation_config.type}"
+        for item in result.results
+        if not item.success
+    )
 
 
 def validate_orders(records: list[dict[str, Any]]) -> ValidationResult:
@@ -79,6 +127,10 @@ def validate_orders(records: list[dict[str, Any]]) -> ValidationResult:
             except (TypeError, ValueError):
                 errors.append(f"records[{index}].{field} must be an ISO date or datetime")
 
+    try:
+        errors.extend(_great_expectations_result(records))
+    except Exception as exc:
+        errors.append(f"Great Expectations could not validate the request: {exc}")
     return ValidationResult(not errors, tuple(errors))
 
 

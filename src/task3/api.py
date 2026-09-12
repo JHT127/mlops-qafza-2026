@@ -13,6 +13,7 @@ from .artifacts import ArtifactError, load_artifacts
 from .config import settings
 from .logging_config import configure_logging
 from .pipeline import InferencePipeline, PredictionError
+from .prediction_store import PredictionStore
 from .schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse,
@@ -23,6 +24,7 @@ from .schemas import (
 
 configure_logging(settings.log_dir, settings.log_level)
 logger = logging.getLogger(__name__)
+prediction_store = PredictionStore(settings.log_dir)
 REQUEST_COUNT = Counter("task3_requests_total", "Inference requests", ["route", "status"])
 REQUEST_LATENCY = Histogram("task3_request_latency_seconds", "Inference request latency", ["route"])
 PREDICTION_COUNT = Counter("task3_predictions_total", "Predictions by outcome", ["is_late"])
@@ -54,6 +56,16 @@ def _record_predictions(predictions: list[PredictionResponse]) -> None:
     for prediction in predictions:
         PREDICTION_COUNT.labels(is_late=str(prediction.is_late).lower()).inc()
         PREDICTION_PROBABILITY.observe(prediction.probability_late)
+
+
+def _store_prediction(input_record: dict, prediction: PredictionResponse, request_id: str) -> None:
+    prediction_store.write(
+        {
+            "request_id": request_id,
+            "input": input_record,
+            "output": prediction.model_dump(mode="json"),
+        }
+    )
 
 
 @app.get("/health")
@@ -95,6 +107,11 @@ def predict(order: OrderRequest, request: Request) -> PredictionResponse:
     REQUEST_COUNT.labels(route="predict", status="200").inc()
     REQUEST_LATENCY.labels(route="predict").observe(time.perf_counter() - started)
     _record_predictions([response])
+    _store_prediction(
+        order.model_dump(mode="json"),
+        response,
+        request.headers.get("x-request-id", "generated"),
+    )
     logger.info(
         "api_prediction path=%s input=%s output=%s",
         request.url.path,
@@ -132,6 +149,9 @@ def predict_batch(payload: BatchPredictionRequest, request: Request) -> BatchPre
     REQUEST_COUNT.labels(route="predict_batch", status="200").inc()
     REQUEST_LATENCY.labels(route="predict_batch").observe(time.perf_counter() - started)
     _record_predictions(response_items)
+    request_id = request.headers.get("x-request-id", "generated")
+    for order, item in zip(payload.orders, response_items, strict=True):
+        _store_prediction(order.model_dump(mode="json"), item, request_id)
     logger.info(
         "api_batch_prediction path=%s input_count=%d output_count=%d",
         request.url.path,
