@@ -45,15 +45,11 @@ def _great_expectations_result(records: list[dict[str, Any]]) -> tuple[str, ...]
     suite = ExpectationSuite(name="task3_orders")
     for column in ("order_purchase_timestamp", "order_estimated_delivery_date"):
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeDateutilParseable(
-                column=column, mostly=1.0
-            )
+            gx.expectations.ExpectColumnValuesToBeDateutilParseable(column=column, mostly=1.0)
         )
     for column in NON_NEGATIVE_FEATURES:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeBetween(
-                column=column, min_value=0, mostly=1.0
-            )
+            gx.expectations.ExpectColumnValuesToBeBetween(column=column, min_value=0, mostly=1.0)
         )
     result = batch_definition.get_batch({"dataframe": frame}).validate(suite)
     return tuple(

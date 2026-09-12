@@ -8,6 +8,7 @@ def population_stability_index(
 ) -> float:
     if not baseline or not current:
         raise ValueError("Both baseline and current populations are required")
+
     def proportions(values: Sequence[float]) -> list[float]:
         counts = [0] * bins
         for value in values:
@@ -19,8 +20,7 @@ def population_stability_index(
     baseline_proportions = proportions(baseline)
     current_proportions = proportions(current)
     return sum(
-        (current_value - baseline_value)
-        * __import__("math").log(current_value / baseline_value)
+        (current_value - baseline_value) * __import__("math").log(current_value / baseline_value)
         for baseline_value, current_value in zip(
             baseline_proportions, current_proportions, strict=True
         )
