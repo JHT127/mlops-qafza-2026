@@ -1,0 +1,14 @@
+{
+  "name": "olist-late-delivery",
+  "stage": "Production",
+  "version": "task-2-random-forest",
+  "source": "mounted-artifact-store",
+  "artifact_files": [
+    "trained_model.joblib",
+    "preprocessor.joblib",
+    "main_product_category_top_values.json",
+    "../reports/feature_list.json"
+  ],
+  "training_metric": "average_precision",
+  "training_metric_value": 0.1286695896317987
+}

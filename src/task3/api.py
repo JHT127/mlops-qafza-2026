@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 REQUEST_COUNT = Counter("task3_requests_total", "Inference requests", ["route", "status"])
 REQUEST_LATENCY = Histogram("task3_request_latency_seconds", "Inference request latency", ["route"])
 PREDICTION_COUNT = Counter("task3_predictions_total", "Predictions by outcome", ["is_late"])
+PREDICTION_PROBABILITY = Histogram(
+    "task3_prediction_probability",
+    "Predicted probability of late delivery",
+    buckets=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
+)
 
 app = FastAPI(
     title="Qafza Late Delivery Inference API",
@@ -48,6 +53,7 @@ def get_pipeline() -> InferencePipeline:
 def _record_predictions(predictions: list[PredictionResponse]) -> None:
     for prediction in predictions:
         PREDICTION_COUNT.labels(is_late=str(prediction.is_late).lower()).inc()
+        PREDICTION_PROBABILITY.observe(prediction.probability_late)
 
 
 @app.get("/health")
