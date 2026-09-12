@@ -25,5 +25,45 @@ services:
     depends_on:
       - postgres
 
+  artifact-store:
+    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
+    container_name: task3_artifact_store
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminchange}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - task3-artifacts:/data
+
+  task3-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task3_api
+    restart: unless-stopped
+    environment:
+      APP_ENV: container
+      MODEL_DIR: /artifacts/models
+      LOG_DIR: /var/log/task3
+      MODEL_VERSION: ${MODEL_VERSION:-task-2-random-forest}
+      PREDICTION_THRESHOLD: ${PREDICTION_THRESHOLD:-0.5}
+      MAX_BATCH_SIZE: ${MAX_BATCH_SIZE:-1000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./tasks/task-02-tables-to-notebooks/artifacts/models:/artifacts/models:ro
+      - ./tasks/task-02-tables-to-notebooks/artifacts/reports:/artifacts/reports:ro
+      - task3-logs:/var/log/task3
+    depends_on:
+      - postgres
+      - artifact-store
+
 volumes:
   postgres-data:
+  task3-artifacts:
+  task3-logs:

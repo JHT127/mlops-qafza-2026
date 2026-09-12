@@ -3,15 +3,17 @@ from fastapi.testclient import TestClient
 from task3.api import app
 
 
-def test_health_and_model_routes():
+def test_health_and_model_routes(monkeypatch, loaded_pipeline):
+    monkeypatch.setattr("task3.api.get_pipeline", lambda: loaded_pipeline)
     client = TestClient(app)
     assert client.get("/health").json()["status"] == "ok"
     model = client.get("/model")
     assert model.status_code == 200
-    assert model.json()["feature_count"] == 91
+    assert model.json()["feature_count"] == len(loaded_pipeline.artifacts.feature_list)
 
 
-def test_predict_route_rejects_unknown_fields():
+def test_predict_route_rejects_unknown_fields(monkeypatch, loaded_pipeline):
+    monkeypatch.setattr("task3.api.get_pipeline", lambda: loaded_pipeline)
     client = TestClient(app)
     response = client.post(
         "/predict",
