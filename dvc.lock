@@ -9,13 +9,13 @@ stages:
       size: 525
     - path: scripts/validate_task3_contract.py
       hash: md5
-      md5: 0789ae974fa887c36e1412ea0c132730
-      size: 683
+      md5: 95355bcff316ea83c8c5ab3a6e064cf9
+      size: 685
     - path: src/task3/features.py
       hash: md5
-      md5: 4ba51a2b57ac25e97d932851129d7c12
-      size: 1250
+      md5: fafec62de8e05437bc1e186bdf7d229f
+      size: 1252
     - path: src/task3/validation.py
       hash: md5
-      md5: 28a5e75dd42011790535849c18516145
-      size: 5501
+      md5: d0242510778d76c3b8f5f7cdb40f3d3c
+      size: 5439

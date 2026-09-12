@@ -54,7 +54,9 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminchange}
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v3.4.0
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
     container_name: task3_mlflow
     restart: unless-stopped
     command: >-
