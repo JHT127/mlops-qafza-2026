@@ -1,0 +1,12 @@
+{
+  "description": "Task 3 order input expectations (Great Expectations contract)",
+  "columns": {
+    "order_purchase_timestamp": { "type": "datetime", "required": true },
+    "order_estimated_delivery_date": { "type": "datetime", "required": true },
+    "non_negative_numeric_features": { "min": 0 },
+    "purchase_dayofweek": { "min": 0, "max": 6 },
+    "purchase_month": { "min": 1, "max": 12 },
+    "categorical_features": { "allowed_type": "string", "missing": true }
+  },
+  "policy_on_failure": "reject"
+}
