@@ -2,6 +2,7 @@
 
 import json
 import logging
+import threading
 import time
 from functools import lru_cache
 
@@ -25,6 +26,7 @@ from .schemas import (
 configure_logging(settings.log_dir, settings.log_level)
 logger = logging.getLogger(__name__)
 prediction_store = PredictionStore(settings.log_dir)
+pipeline_lock = threading.Lock()
 REQUEST_COUNT = Counter("task3_requests_total", "Inference requests", ["route", "status"])
 REQUEST_LATENCY = Histogram("task3_request_latency_seconds", "Inference request latency", ["route"])
 PREDICTION_COUNT = Counter("task3_predictions_total", "Predictions by outcome", ["is_late"])
@@ -43,22 +45,23 @@ app = FastAPI(
 
 @lru_cache(maxsize=1)
 def get_pipeline() -> InferencePipeline:
-    try:
-        if settings.model_source == "mlflow":
-            model_uri = f"models:/{settings.mlflow_model_name}/{settings.mlflow_model_stage}"
-            artifacts = load_registry_artifacts(
-                settings.model_dir,
-                settings.feature_list_path,
-                settings.model_version,
-                model_uri,
-                settings.mlflow_tracking_uri,
-            )
-        else:
-            artifacts = load_artifacts(
-                settings.model_dir, settings.feature_list_path, settings.model_version
-            )
-    except (ArtifactError, OSError) as exc:
-        raise RuntimeError(str(exc)) from exc
+    with pipeline_lock:
+        try:
+            if settings.model_source == "mlflow":
+                model_uri = f"models:/{settings.mlflow_model_name}/{settings.mlflow_model_stage}"
+                artifacts = load_registry_artifacts(
+                    settings.model_dir,
+                    settings.feature_list_path,
+                    settings.model_version,
+                    model_uri,
+                    settings.mlflow_tracking_uri,
+                )
+            else:
+                artifacts = load_artifacts(
+                    settings.model_dir, settings.feature_list_path, settings.model_version
+                )
+        except (ArtifactError, OSError) as exc:
+            raise RuntimeError(str(exc)) from exc
     return InferencePipeline(artifacts, settings.prediction_threshold)
 
 
@@ -80,10 +83,17 @@ def _store_prediction(input_record: dict, prediction: PredictionResponse, reques
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    """Fast liveness probe that does not load the large model artifact."""
+    return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    """Readiness probe that verifies the model and fitted objects can load."""
     try:
         get_pipeline()
     except RuntimeError as exc:
-        return {"status": "degraded", "detail": str(exc)}
+        return {"status": "not_ready", "detail": str(exc)}
     return {"status": "ok"}
 
 

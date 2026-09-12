@@ -26,7 +26,10 @@ uvicorn app.main:app --reload
 ```
 
 Open `http://localhost:8000/docs` for the generated API documentation. The service
-exposes `/health`, `/model`, `/predict`, `/predict/batch`, and `/metrics`.
+exposes `/health`, `/ready`, `/model`, `/predict`, `/predict/batch`, and `/metrics`.
+
+`/health` is a lightweight liveness probe. `/ready` loads and verifies the model; use it
+to confirm the service is ready for prediction after the large model finishes loading.
 
 The command-line adapter accepts one JSON order from a file or stdin:
 

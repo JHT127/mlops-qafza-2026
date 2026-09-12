@@ -12,6 +12,11 @@ def test_health_and_model_routes(monkeypatch, loaded_pipeline):
     assert model.json()["feature_count"] == len(loaded_pipeline.artifacts.feature_list)
 
 
+def test_health_is_fast_liveness_probe(monkeypatch):
+    monkeypatch.setattr("task3.api.get_pipeline", lambda: (_ for _ in ()).throw(AssertionError()))
+    assert TestClient(app).get("/health").json() == {"status": "ok"}
+
+
 def test_predict_route_rejects_unknown_fields(monkeypatch, loaded_pipeline):
     monkeypatch.setattr("task3.api.get_pipeline", lambda: loaded_pipeline)
     client = TestClient(app)
